@@ -1,33 +1,53 @@
 const gulp = require('gulp');
 const sass = require('gulp-sass')(require('sass'));
+const sourcemaps = require('gulp-sourcemaps');
+const uglify = require('gulp-uglify');
+const obfuscate = require('gulp-obfuscate');
+const imagemin = require('gulp-imagemin');
+
+function comprimeimagens() {
+  return gulp
+    .src('./source/images/*')
+    .pipe(imagemin())
+    .pipe(gulp.dest('./build/images'));
+}
+
+function comprimejavascript() {
+  return gulp
+    .src('./source/scripts/*.js')
+    .pipe(uglify())
+    .pipe(obfuscate())
+    .pipe(gulp.dest('./build/scripts'));
+}
 
 function compilaSass() {
   return gulp
-    .src('./soucer/styles/*.scss')
-    .pipe(sass())
+    .src('./source/styles/main.scss')
+    .pipe(sourcemaps.init())
+    .pipe(
+      sass({
+        outputStyle: 'compressed',
+      }),
+    )
+    .pipe(sourcemaps.write('./maps'))
 
     .pipe(gulp.dest('./build/styles'));
 }
 
-function funcaopadrao(callback) {
-  setTimeout(function () {
-    console.log('execultando via gulp');
-    callback();
-  }, 2000);
-}
-
-function dizoi(callback) {
-  setTimeout(function () {
-    console.log('olá gulp');
-    diztchau();
-    callback();
-  }, 1000);
-}
-
-function diztchau() {
-  console.log('chau gulp');
-}
-
-exports.default = gulp.parallel(funcaopadrao, dizoi);
-exports.dizoi = dizoi;
-exports.sass = compilaSass;
+exports.default = function () {
+  gulp.watch(
+    './source/styles/*.scss',
+    { ignoreInitial: false },
+    gulp.series(compilaSass),
+  );
+  gulp.watch(
+    './source/scripts/*.js',
+    { ignoreInitial: false },
+    gulp.series(comprimejavascript),
+  );
+  gulp.watch(
+    './source/images/*',
+    { ignoreInitial: false },
+    gulp.series(comprimeimagens),
+  );
+};
